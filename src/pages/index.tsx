@@ -1,11 +1,48 @@
 import Head from 'next/head'
-import Image from 'next/image'
+import React, { FormEvent } from 'react'
 import { Inter } from 'next/font/google'
-import styles from '@/styles/Home.module.css'
+import data from '../../db.json'
+import { DailyBillingProps, StatesProps } from '@/@types'
+import { checkFibonacci, dailyBillingProcess, getPercentage, inverterString } from '@/connections'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export default function Home() {
+  const [inputValue, setInput] = React.useState('')
+  const [inputReverse, setInputReverse] = React.useState('')
+  const [resulteReverse, setResulteReverse] = React.useState('')
+  const [isFibonacci, setFibonacci] = React.useState(false)
+  const [dailyBilling, setDailyBilling] = React.useState<DailyBillingProps>()
+  const [percentages, setPercentages] = React.useState<StatesProps[]>()
+
+  function handleSubmit(event: FormEvent<HTMLElement>) {
+    event.preventDefault()
+    const response = checkFibonacci(Number(inputValue))
+    if (response) {
+      setFibonacci(true)
+    } else {
+      setFibonacci(false)
+    }
+    setInput('')
+  }
+
+  React.useEffect(() => {
+    const response = dailyBillingProcess(data)
+    setDailyBilling(response)
+  }, [])
+
+  React.useEffect(() => {
+    const response = getPercentage()
+    setPercentages(response)
+  }, [])
+
+  function reverseString(event: FormEvent<HTMLElement>) {
+    event.preventDefault()
+    const response = inverterString(inputReverse)
+    setResulteReverse(response)
+    setInputReverse('')
+  }
+
   return (
     <>
       <Head>
@@ -14,110 +51,78 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className={styles.main}>
-        <div className={styles.description}>
-          <p>
-            Get started by editing&nbsp;
-            <code className={styles.code}>src/pages/index.tsx</code>
+      <>
+        <div>
+          <h1>Fibonacci Case</h1>
+          <form onSubmit={handleSubmit} >
+            <input
+              required
+              type="number"
+              value={inputValue}
+              onChange={({ target }) => setInput(target.value)} />
+            <button>Enviar</button>
+          </form>
+          {isFibonacci ? <p>Pertence à sequência de Fibonacci</p> :
+            <p>Não pertence à sequência de Fibonacci</p>
+          }
+        </div>
+
+        <div>
+          <h1>2° Case</h1>
+          <h2>Faturamento Diário</h2>
+          <p>O menor valor de faturamento ocorrido em um dia do mês: {dailyBilling?.lowerBilling
+            .toLocaleString('pt-br', {
+              style: 'currency',
+              currency: 'BRL'
+            })}
           </p>
-          <div>
-            <a
-              href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              By{' '}
-              <Image
-                src="/vercel.svg"
-                alt="Vercel Logo"
-                className={styles.vercelLogo}
-                width={100}
-                height={24}
-                priority
-              />
-            </a>
-          </div>
+
+          <p>O maior valor de faturamento ocorrido em um dia do mês: {dailyBilling?.higherBilling
+            .toLocaleString('pt-br', {
+              style: 'currency',
+              currency: 'BRL'
+            })}
+          </p>
+
+          <p>Total: {dailyBilling?.total
+            .toLocaleString('pt-br', {
+              style: 'currency',
+              currency: 'BRL'
+            })}
+          </p>
+
+          <p>Número de dias no mês em que o valor de faturamento diário foi superior à média mensal: {dailyBilling?.daysAboveAverage} dias.
+          </p>
         </div>
 
-        <div className={styles.center}>
-          <Image
-            className={styles.logo}
-            src="/next.svg"
-            alt="Next.js Logo"
-            width={180}
-            height={37}
-            priority
-          />
-          <div className={styles.thirteen}>
-            <Image
-              src="/thirteen.svg"
-              alt="13"
-              width={40}
-              height={31}
-              priority
-            />
-          </div>
+        <div>
+          <h1>3° Case</h1>
+          <h2>Valor de faturamento mensal de uma distribuidora, detalhado por estado:</h2>
+          {percentages?.map(result => (
+            <p key={result?.state}>
+              {result?.state}: {parseFloat(result.percentage.replace(",", "."))
+                .toLocaleString('pt-br', {
+                  style: 'currency',
+                  currency: 'BRL'
+                })}
+            </p>
+          ))}
         </div>
 
-        <div className={styles.grid}>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Docs <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Find in-depth information about Next.js features and&nbsp;API.
-            </p>
-          </a>
-
-          <a
-            href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Learn <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Learn about Next.js in an interactive course with&nbsp;quizzes!
-            </p>
-          </a>
-
-          <a
-            href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Templates <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Discover and deploy boilerplate example Next.js&nbsp;projects.
-            </p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Deploy <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Instantly deploy your Next.js site to a shareable URL
-              with&nbsp;Vercel.
-            </p>
-          </a>
+        <div>
+          <h1>4° Case</h1>
+          <form onSubmit={reverseString} >
+            <input
+              required
+              type="text"
+              placeholder='Digite um texto'
+              value={inputReverse}
+              onChange={({ target }) => setInputReverse(target.value)} />
+            <button>Reverter</button>
+          </form>
+          {resulteReverse && <p>{resulteReverse}</p>}
         </div>
-      </main>
+      </>
     </>
   )
 }
