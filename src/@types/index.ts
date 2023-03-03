@@ -18,11 +18,6 @@ export type PercentagesBillingProps = {
     [key: string]: string;
 }
 
-// export type StatesProps = {
-//     state: string | number;
-//     percentage: string | number;
-// }
-
 export type StatesProps = {
     state: string;
     percentage: string;
